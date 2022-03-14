@@ -36,6 +36,12 @@ namespace InfoBoltAPI.Controllers
             }
             return await Task.FromResult(user);
         }
+        [HttpPost("CheckPassword/{email}")]
+        public async Task<bool> CheckPassword(string email, [FromBody]string pw)
+        {
+            User? user = await _context.Users.FirstOrDefaultAsync(user => user.Email == email && user.Pw == md5(pw));
+            return user is not null;
+        }
 
         /// <summary>
         /// Used for checking if the user is authenticated or not.

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace InfoBoltAPI.DB
+namespace EFCoreShared.DB
 {
     public partial class User
     {

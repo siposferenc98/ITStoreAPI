@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace InfoBoltAPI.DB
+namespace EFCoreShared.DB
 {
     public partial class Product
     {
@@ -11,5 +11,6 @@ namespace InfoBoltAPI.DB
         public int Price { get; set; }
         public int Type { get; set; }
         public string Imgurl { get; set; } = null!;
+        public int Stock { get; set; }
     }
 }

@@ -1,5 +1,4 @@
-﻿using InfoBoltAPI.DB;
-using Microsoft.AspNetCore.Authentication;
+﻿using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
@@ -85,7 +84,13 @@ namespace InfoBoltAPI.Controllers
         [HttpGet("Profile/{id}")]
         public async Task<User?> GetProfile(int id)
         {
-            return await _context.Users.FirstOrDefaultAsync(user => id == user.Id);
+            if (User.Identity.IsAuthenticated) //Gets the ClaimsPrincipal from the sent auth cookie.
+            {
+                var loggedUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if(int.Parse(loggedUserId) == id)
+                    return await _context.Users.FirstOrDefaultAsync(user => id == user.Id);
+            }
+            return null;
         }
 
         /// <summary>
@@ -97,18 +102,41 @@ namespace InfoBoltAPI.Controllers
         [HttpPut("Profile/{id}")]
         public async Task<User?> UpdateProfile(int id, User u)
         {
-            User? updateThisUser = await _context.Users.FirstOrDefaultAsync(user => user.Id == id);
-            if (updateThisUser is not null)
+            if (User.Identity.IsAuthenticated) //Gets the ClaimsPrincipal from the sent auth cookie.
             {
-                updateThisUser.Email = u.Email;
-                updateThisUser.Role = u.Role;
-                updateThisUser.Pw = u.Pw;
-
-                if (await _context.SaveChangesAsync() > 0)
+                var loggedUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (int.Parse(loggedUserId) == id)
                 {
-                    return await Task.FromResult(u);
+                    User? updateThisUser = await _context.Users.FirstOrDefaultAsync(user => user.Id == id);
+                    if (updateThisUser is not null)
+                    {
+                        updateThisUser.Email = u.Email;
+                        updateThisUser.Pw = md5(u.Pw);
+
+                        if (await _context.SaveChangesAsync() > 0)
+                        {
+                            return await Task.FromResult(u);
+                        }
+                    }
                 }
             }
+
+            return null;
+        }
+
+        [HttpPut]
+        public async Task<User?> Register(User u)
+        {
+            if (_context.Users.Any(x => x.Email == u.Email))
+                return null;
+
+            u.Role = 1;
+            u.Pw = md5(u.Pw);
+            _context.Users.Add(u);
+
+            if(await _context.SaveChangesAsync() > 0)
+                return await Task.FromResult(u);
+
             return null;
         }
 

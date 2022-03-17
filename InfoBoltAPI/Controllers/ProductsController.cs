@@ -1,5 +1,4 @@
-﻿using InfoBoltAPI.DB;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -27,6 +26,13 @@ namespace InfoBoltAPI.Controllers
         public Product Get(int id)
         {
             return _context.Products.FirstOrDefault(p => p.Id == id) ?? new();
+        }
+
+        // GET api/<ProductsController>/5
+        [HttpGet("Fresh")]
+        public List<Product> GetFresh()
+        {
+            return _context.Products.ToList().TakeLast(5).ToList();
         }
 
         // POST api/<ProductsController>

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 
-namespace InfoBoltAPI.DB
+namespace EFCoreShared.DB
 {
     public partial class infoboltContext : DbContext
     {
@@ -56,6 +56,10 @@ namespace InfoBoltAPI.DB
                 entity.Property(e => e.Price)
                     .HasColumnType("int(11)")
                     .HasColumnName("price");
+
+                entity.Property(e => e.Stock)
+                    .HasColumnType("int(11)")
+                    .HasColumnName("stock");
 
                 entity.Property(e => e.Type)
                     .HasColumnType("int(11)")

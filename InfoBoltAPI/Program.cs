@@ -1,7 +1,3 @@
-global using static FSharpLib;
-using InfoBoltAPI.DB;
-using Microsoft.AspNetCore.Authentication.Cookies;
-
 var builder = WebApplication.CreateBuilder(args);
 
 

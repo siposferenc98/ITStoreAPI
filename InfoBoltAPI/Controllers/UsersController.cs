@@ -28,20 +28,42 @@ namespace InfoBoltAPI.Controllers
             User? user = _context.Users.FirstOrDefault(user => user.Email == u.Email && user.Pw == md5(u.Pw));
             if (user is not null)
             {
-                var claim = new Claim(ClaimTypes.NameIdentifier, user.Id.ToString());
-                var claimsIdentity = new ClaimsIdentity(new[] { claim }, "serverAuth");
+                var claimId = new Claim(ClaimTypes.NameIdentifier, user.Id.ToString());
+                var claimEmail = new Claim(ClaimTypes.Name, user.Email);
+                var claimsIdentity = new ClaimsIdentity(new[] { claimId, claimEmail }, "serverAuth");
                 var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
                 await HttpContext.SignInAsync(claimsPrincipal);
             }
             return await Task.FromResult(user);
         }
-        [HttpPost("CheckPassword/{email}")]
-        public async Task<bool> CheckPassword(string email, [FromBody]string pw)
+        
+        [HttpPost("ChangePassword/{email}")]
+        public async Task<bool> ChangePassword(string email, [FromBody] List<string> passwords)
         {
-            User? user = await _context.Users.FirstOrDefaultAsync(user => user.Email == email && user.Pw == md5(pw));
-            return user is not null;
-        }
+            if (User.Identity.IsAuthenticated) //Gets the ClaimsPrincipal from the sent auth cookie.
+            {
+                var claimEmail = User.FindFirstValue(ClaimTypes.Name);
+                if(claimEmail == email)
+                {
+                    User? user = await CheckPassword(email, passwords[0]);
+                    if (user is null) //old password doesnt match
+                        return false;
+                    user.Pw = md5(passwords[1]);
+                    if(await _context.SaveChangesAsync() > 0)
+                    {
+                        return true;
+                    }
+                    return false;
+                }
 
+            }
+            return false;
+        }
+        private async Task<User?> CheckPassword(string email, string oldPw)
+        {
+            User? user = await _context.Users.FirstOrDefaultAsync(user => user.Email == email && user.Pw == md5(oldPw));
+            return user;
+        }
         /// <summary>
         /// Used for checking if the user is authenticated or not.
         /// </summary>
@@ -110,8 +132,12 @@ namespace InfoBoltAPI.Controllers
                     User? updateThisUser = await _context.Users.FirstOrDefaultAsync(user => user.Id == id);
                     if (updateThisUser is not null)
                     {
+
                         updateThisUser.Email = u.Email;
-                        updateThisUser.Pw = md5(u.Pw);
+
+                        updateThisUser.Address = u.Address;
+                        updateThisUser.Phone = u.Phone;
+                        updateThisUser.City = u.City;
 
                         if (await _context.SaveChangesAsync() > 0)
                         {

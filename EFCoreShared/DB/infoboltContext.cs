@@ -16,6 +16,8 @@ namespace EFCoreShared.DB
         {
         }
 
+        public virtual DbSet<Item> Items { get; set; } = null!;
+        public virtual DbSet<Order> Orders { get; set; } = null!;
         public virtual DbSet<Product> Products { get; set; } = null!;
         public virtual DbSet<User> Users { get; set; } = null!;
 
@@ -23,7 +25,6 @@ namespace EFCoreShared.DB
         {
             if (!optionsBuilder.IsConfigured)
             {
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see http://go.microsoft.com/fwlink/?LinkId=723263.
                 optionsBuilder.UseMySql("server=localhost;database=infobolt;uid=root;sslmode=none", Microsoft.EntityFrameworkCore.ServerVersion.Parse("10.4.20-mariadb"));
             }
         }
@@ -32,6 +33,68 @@ namespace EFCoreShared.DB
         {
             modelBuilder.UseCollation("utf8mb4_general_ci")
                 .HasCharSet("utf8mb4");
+
+            modelBuilder.Entity<Item>(entity =>
+            {
+                entity.ToTable("items");
+
+                entity.HasIndex(e => e.Orderid, "items_order");
+
+                entity.Property(e => e.Id)
+                    .HasColumnType("int(11)")
+                    .HasColumnName("id");
+
+                entity.Property(e => e.Orderid)
+                    .HasColumnType("int(11)")
+                    .HasColumnName("orderid");
+
+                entity.Property(e => e.Productcount)
+                    .HasColumnType("int(11)")
+                    .HasColumnName("productcount");
+
+                entity.Property(e => e.Productid)
+                    .HasColumnType("int(11)")
+                    .HasColumnName("productid");
+
+                entity.HasOne(d => d.Order)
+                    .WithMany(p => p.Items)
+                    .HasForeignKey(d => d.Orderid)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("items_order");
+            });
+
+            modelBuilder.Entity<Order>(entity =>
+            {
+                entity.ToTable("orders");
+
+                entity.HasIndex(e => e.Userid, "order_user");
+
+                entity.Property(e => e.Id)
+                    .HasColumnType("int(11)")
+                    .HasColumnName("id");
+
+                entity.Property(e => e.Completed)
+                    .HasColumnType("tinyint(4)")
+                    .HasColumnName("completed");
+
+                entity.Property(e => e.Date)
+                    .HasColumnType("datetime")
+                    .HasColumnName("date");
+
+                entity.Property(e => e.Paymentmethod)
+                    .HasMaxLength(100)
+                    .HasColumnName("paymentmethod");
+
+                entity.Property(e => e.Userid)
+                    .HasColumnType("int(11)")
+                    .HasColumnName("userid");
+
+                entity.HasOne(d => d.User)
+                    .WithMany(p => p.Orders)
+                    .HasForeignKey(d => d.Userid)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("order_user");
+            });
 
             modelBuilder.Entity<Product>(entity =>
             {
@@ -74,9 +137,21 @@ namespace EFCoreShared.DB
                     .HasColumnType("int(11)")
                     .HasColumnName("id");
 
+                entity.Property(e => e.Address)
+                    .HasMaxLength(255)
+                    .HasColumnName("address");
+
+                entity.Property(e => e.City)
+                    .HasMaxLength(100)
+                    .HasColumnName("city");
+
                 entity.Property(e => e.Email)
                     .HasMaxLength(100)
                     .HasColumnName("email");
+
+                entity.Property(e => e.Phone)
+                    .HasMaxLength(50)
+                    .HasColumnName("phone");
 
                 entity.Property(e => e.Pw)
                     .HasMaxLength(255)
